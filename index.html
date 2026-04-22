@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -21,7 +20,7 @@
             --border-glow: rgba(255, 120, 0, 0.4);
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; cursor: crosshair; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Poppins', sans-serif;
@@ -45,7 +44,7 @@
             width: 100%; height: 100%;
             background: url('image_0.png') no-repeat center center;
             background-size: cover;
-            opacity: 0.25; /* Higher visibility for your logo */
+            opacity: 0.25;
             z-index: 1;
         }
 
@@ -57,14 +56,13 @@
             background: var(--glass-base);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 40px;
-            padding: 60px 0;
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
-            overflow: hidden;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: all 0.5s ease;
+            overflow: hidden; /* Critical for hiding the panel not in view */
         }
 
-        /* Translucent state for focus */
+        /* Darken & Blur when typing */
         .main-container.is-typing {
             background: var(--glass-typing);
             backdrop-filter: blur(40px);
@@ -73,23 +71,27 @@
             box-shadow: 0 0 40px rgba(255, 120, 0, 0.15);
         }
 
-        /* ========== HORIZONTAL SLIDE STAGE ========== */
+        /* ========== STRICT HORIZONTAL SLIDER ========== */
         .form-stage {
             display: flex;
-            width: 200%; /* Side-by-side Layout */
-            transition: transform 0.7s cubic-bezier(0.86, 0, 0.07, 1);
+            width: 200%; /* 200% makes it exactly wide enough for two full-width panels */
+            transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+            align-items: stretch;
         }
 
         .panel { 
+            flex: 0 0 50%; /* Force to exactly 50% of the stage (100% of container). No shrinking! */
             width: 50%; 
-            padding: 0 45px; 
-            text-align: center;
+            padding: 50px 40px; /* Padding moved HERE to prevent breaking slider math */
             display: flex;
             flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
         }
 
-        /* Smooth shift to right (Signup) */
-        .show-signup .form-stage { transform: translateX(-50%); }
+        /* The Slide Action: Moves the stage left by 50% of its total width */
+        .main-container.show-signup .form-stage { transform: translateX(-50%); }
 
         h2 { 
             font-family: 'Orbitron'; letter-spacing: 5px; 
@@ -120,7 +122,8 @@
         .btn-glow:active { transform: scale(0.96); }
         .btn-glow:disabled { opacity: 0.3; filter: grayscale(1); cursor: not-allowed; }
 
-        .bottom-links { margin-top: 30px; font-size: 0.85rem; color: #bbb; }
+        .bottom-links { margin-top: 30px; font-size: 0.85rem; color: #bbb; width: 100%; }
+        .bottom-links p { margin: 10px 0; }
         .bottom-links b { color: var(--orange); cursor: pointer; text-decoration: underline; }
 
         /* Notification Popup */
@@ -129,9 +132,9 @@
             transform: translateX(-50%);
             background: #000; border: 1px solid var(--orange);
             padding: 15px 35px; border-radius: 50px;
-            color: #fff; z-index: 1000; font-family: 'Orbitron';
-            box-shadow: 0 0 20px var(--orange);
-            animation: slideDown 0.4s ease forwards;
+            color: #fff; z-index: 1000; font-family: 'Orbitron'; font-size: 0.9rem;
+            box-shadow: 0 0 20px rgba(255,120,0,0.5);
+            animation: slideDown 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
 
         @keyframes slideDown { from { top: -100px; } to { top: 30px; } }
@@ -143,7 +146,7 @@
     <div id="particles-js"></div>
 
     <div class="main-container" id="mainContainer">
-        <div class="form-stage">
+        <div class="form-stage" id="formStage">
             
             <div class="panel" id="loginPanel">
                 <h2>LOGIN</h2>
@@ -192,23 +195,24 @@
     // --- PARTICLES.JS ---
     particlesJS("particles-js", {
         "particles": {
-            "number": { "value": 85 },
+            "number": { "value": 75 },
             "color": { "value": "#FF7800" },
             "shape": { "type": "circle" },
             "opacity": { "value": 0.4 },
             "size": { "value": 2 },
             "line_linked": { "enable": true, "distance": 140, "color": "#FF7800", "opacity": 0.3, "width": 1 },
-            "move": { "enable": true, "speed": 1.8 }
+            "move": { "enable": true, "speed": 1.5 }
         },
         "interactivity": {
             "events": { "onhover": { "enable": true, "mode": "grab" }, "onclick": { "enable": true, "mode": "push" } }
         }
     });
 
-    // --- SOUND ENGINE ---
+    // --- AUDIO SYSTEM ---
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    function playBeep(freq, dur) {
+    function playSFX(freq, dur) {
         try {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.type = 'sine';
@@ -222,66 +226,69 @@
         } catch(e) {}
     }
 
-    // --- INTERFACE DYNAMICS ---
-    const mainContainer = document.getElementById('mainContainer');
+    // --- INTERFACE LOGIC ---
     const inputs = document.querySelectorAll('.auth-input');
 
-    // Handle typing transparency
+    // Handle typing transparency state
     inputs.forEach(input => {
         input.addEventListener('focus', () => {
-            mainContainer.classList.add('is-typing');
-            playBeep(500, 0.1);
+            document.getElementById('mainContainer').classList.add('is-typing');
+            playSFX(500, 0.1);
         });
         input.addEventListener('blur', () => {
             const hasData = Array.from(inputs).some(i => i.value.length > 0);
-            if (!hasData) mainContainer.classList.remove('is-typing');
+            if (!hasData) document.getElementById('mainContainer').classList.remove('is-typing');
         });
     });
 
-    // HORIZONTAL SLIDE TRIGGER
+    // --- HORIZONTAL SLIDER TRIGGER ---
     function toggleView(isSignup) {
+        const container = document.getElementById('mainContainer');
         if(isSignup) {
-            mainContainer.classList.add('show-signup');
+            container.classList.add('show-signup'); // Slides left, bringing Signup (right panel) into view
         } else {
-            mainContainer.classList.remove('show-signup');
+            container.classList.remove('show-signup'); // Slides back to Login
         }
-        playBeep(300, 0.2); // Low beep for transition
+        playSFX(300, 0.2); 
     }
 
-    // --- AUTH & SECURITY ---
+    // --- AUTHENTICATION LOGIC ---
     let loginFailures = 0;
     let isLockedOut = false;
 
     function handleLogin() {
         if(isLockedOut) return;
-        const u = document.getElementById('lUser').value;
+        const u = document.getElementById('lUser').value.trim();
         const p = document.getElementById('lPass').value;
+
+        if(!u || !p) return showPopup("ERROR", "Fill all fields.");
 
         auth.signInWithEmailAndPassword(u, p)
             .then(() => {
-                playBeep(800, 0.4);
+                playSFX(800, 0.4);
                 showPopup("AUTHORIZED", "Welcome, Warrior.");
             })
             .catch(() => {
                 loginFailures++;
-                playBeep(150, 0.3);
+                playSFX(150, 0.3);
                 showPopup("ACCESS DENIED", "Wrong credentials entered.");
                 if(loginFailures >= 3) applyLockout();
             });
     }
 
     function handleSignup() {
-        const u = document.getElementById('sUser').value;
+        const u = document.getElementById('sUser').value.trim();
         const p = document.getElementById('sPass').value;
         const c = document.getElementById('sConfirm').value;
 
+        if(!u || !p || !c) return showPopup("ERROR", "Fill all fields.");
         if(p !== c) return showPopup("ERROR", "Passcodes mismatch.");
 
         auth.createUserWithEmailAndPassword(u, p)
             .then(res => {
                 db.ref('users/' + res.user.uid).set({ username: u, rank: 'Novice' });
                 showPopup("INITIALIZED", "Warrior Identity Created.");
-                toggleView(false);
+                toggleView(false); // Slide back to login on success
             })
             .catch(err => showPopup("FAILURE", err.message));
     }
