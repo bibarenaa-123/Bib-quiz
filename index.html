@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -15,9 +16,9 @@
     <style>
         :root {
             --orange: #FF7800;
-            --glass-clear: rgba(255, 255, 255, 0.02);
-            --glass-active: rgba(5, 5, 10, 0.9);
-            --border: rgba(255, 255, 255, 0.1);
+            --glass-base: rgba(255, 255, 255, 0.02);
+            --glass-typing: rgba(5, 5, 15, 0.9);
+            --border-glow: rgba(255, 120, 0, 0.4);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; cursor: crosshair; }
@@ -44,57 +45,56 @@
             width: 100%; height: 100%;
             background: url('image_0.png') no-repeat center center;
             background-size: cover;
-            opacity: 0.2;
+            opacity: 0.25; /* Higher visibility for your logo */
             z-index: 1;
         }
 
-        /* ========== ELITE GLASS CONTAINER ========== */
+        /* ========== GLASSMORPHISM CONTAINER ========== */
         .main-container {
             position: relative;
             z-index: 10;
             width: 90%; max-width: 420px;
-            background: var(--glass-clear);
-            border: 1px solid var(--border);
+            background: var(--glass-base);
+            border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 40px;
             padding: 60px 0;
-            backdrop-filter: blur(5px);
-            -webkit-backdrop-filter: blur(5px);
-            transition: all 0.6s cubic-bezier(0.19, 1, 0.22, 1);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
             overflow: hidden;
         }
 
-        /* Translucent state when typing */
+        /* Translucent state for focus */
         .main-container.is-typing {
-            background: var(--glass-active);
+            background: var(--glass-typing);
             backdrop-filter: blur(40px);
             -webkit-backdrop-filter: blur(40px);
-            border-color: var(--orange);
-            box-shadow: 0 0 50px rgba(255, 120, 0, 0.2);
+            border-color: var(--border-glow);
+            box-shadow: 0 0 40px rgba(255, 120, 0, 0.15);
         }
 
-        /* ========== HORIZONTAL SLIDE LOGIC ========== */
+        /* ========== HORIZONTAL SLIDE STAGE ========== */
         .form-stage {
             display: flex;
-            width: 200%; /* Side-by-side panels */
-            transition: transform 0.8s cubic-bezier(0.19, 1, 0.22, 1);
+            width: 200%; /* Side-by-side Layout */
+            transition: transform 0.7s cubic-bezier(0.86, 0, 0.07, 1);
         }
 
         .panel { 
             width: 50%; 
             padding: 0 45px; 
-            text-align: center; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
+            text-align: center;
+            display: flex;
+            flex-direction: column;
         }
 
-        /* The Slide Effect */
+        /* Smooth shift to right (Signup) */
         .show-signup .form-stage { transform: translateX(-50%); }
 
         h2 { 
             font-family: 'Orbitron'; letter-spacing: 5px; 
             margin-bottom: 30px; color: #fff;
-            text-shadow: 0 0 10px rgba(255,120,0,0.5);
+            text-shadow: 0 0 10px rgba(255, 120, 0, 0.3);
         }
 
         input {
@@ -102,7 +102,7 @@
             background: rgba(255,255,255,0.05);
             border: 1px solid rgba(255,255,255,0.1);
             border-radius: 15px; color: #fff; outline: none;
-            transition: 0.3s; font-family: 'Poppins';
+            transition: 0.3s;
         }
 
         input:focus { border-color: var(--orange); background: rgba(255,255,255,0.1); }
@@ -114,13 +114,13 @@
             font-family: 'Orbitron'; font-weight: 900;
             box-shadow: 0 10px 30px rgba(255, 120, 0, 0.3);
             cursor: pointer;
+            transition: 0.2s;
         }
 
-        .btn-glow:active { transform: scale(0.95); }
+        .btn-glow:active { transform: scale(0.96); }
         .btn-glow:disabled { opacity: 0.3; filter: grayscale(1); cursor: not-allowed; }
 
-        .bottom-links { margin-top: 30px; font-size: 0.8rem; color: #aaa; }
-        .bottom-links p { margin: 10px 0; }
+        .bottom-links { margin-top: 30px; font-size: 0.85rem; color: #bbb; }
         .bottom-links b { color: var(--orange); cursor: pointer; text-decoration: underline; }
 
         /* Notification Popup */
@@ -128,7 +128,7 @@
             position: fixed; top: 30px; left: 50%;
             transform: translateX(-50%);
             background: #000; border: 1px solid var(--orange);
-            padding: 15px 30px; border-radius: 50px;
+            padding: 15px 35px; border-radius: 50px;
             color: #fff; z-index: 1000; font-family: 'Orbitron';
             box-shadow: 0 0 20px var(--orange);
             animation: slideDown 0.4s ease forwards;
@@ -143,30 +143,31 @@
     <div id="particles-js"></div>
 
     <div class="main-container" id="mainContainer">
-        <div class="form-stage" id="formStage">
+        <div class="form-stage">
             
-            <div class="panel">
+            <div class="panel" id="loginPanel">
                 <h2>LOGIN</h2>
                 <input type="text" class="auth-input" id="lUser" placeholder="WARRIOR ID">
                 <input type="password" class="auth-input" id="lPass" placeholder="PASSCODE">
                 <button class="btn-glow" id="lBtn" onclick="handleLogin()">AUTHENTICATE</button>
-                <div id="lockTimer" style="color:var(--orange); font-weight:bold; margin-top:15px; font-family:'Orbitron';"></div>
+                
+                <div id="lockTimer" style="color:var(--orange); font-weight:bold; margin-top:15px; font-family:'Orbitron'; font-size:0.8rem;"></div>
                 
                 <div class="bottom-links">
-                    <p>Forgot passcode?</p>
-                    <p onclick="toggleView(true)">New BIB Warrior? <b>Initialize Identity</b></p>
+                    <p>Forgotten Credentials?</p>
+                    <p>New BIB Warrior? <b onclick="toggleView(true)">Initialize Identity</b></p>
                 </div>
             </div>
 
-            <div class="panel">
+            <div class="panel" id="signupPanel">
                 <h2>SIGN UP</h2>
                 <input type="text" class="auth-input" id="sUser" placeholder="NEW WARRIOR ID">
                 <input type="password" class="auth-input" id="sPass" placeholder="SET PASSCODE">
                 <input type="password" class="auth-input" id="sConfirm" placeholder="CONFIRM PASSCODE">
-                <button class="btn-glow" id="sBtn" onclick="handleSignup()">INITIALIZE</button>
+                <button class="btn-glow" id="sBtn" onclick="handleSignup()">CREATE WARRIOR</button>
                 
                 <div class="bottom-links">
-                    <p onclick="toggleView(false)">Registered Warrior? <b>Return to Login</b></p>
+                    <p>Existing Identity? <b onclick="toggleView(false)">Return to Login</b></p>
                 </div>
             </div>
 
@@ -174,7 +175,7 @@
     </div>
 
 <script>
-    // --- FIREBASE CONFIG ---
+    // --- FIREBASE INITIALIZATION ---
     const firebaseConfig = {
         apiKey: "YOUR_KEY",
         authDomain: "YOUR_DOMAIN",
@@ -191,83 +192,81 @@
     // --- PARTICLES.JS ---
     particlesJS("particles-js", {
         "particles": {
-            "number": { "value": 90 },
+            "number": { "value": 85 },
             "color": { "value": "#FF7800" },
             "shape": { "type": "circle" },
             "opacity": { "value": 0.4 },
             "size": { "value": 2 },
-            "line_linked": { "enable": true, "distance": 150, "color": "#FF7800", "opacity": 0.3, "width": 1 },
-            "move": { "enable": true, "speed": 1.5 }
+            "line_linked": { "enable": true, "distance": 140, "color": "#FF7800", "opacity": 0.3, "width": 1 },
+            "move": { "enable": true, "speed": 1.8 }
         },
         "interactivity": {
             "events": { "onhover": { "enable": true, "mode": "grab" }, "onclick": { "enable": true, "mode": "push" } }
         }
     });
 
-    // --- SOUNDSCAPE ---
+    // --- SOUND ENGINE ---
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    function playSound(freq, type, duration) {
+    function playBeep(freq, dur) {
         try {
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
-            osc.type = type;
+            osc.type = 'sine';
             osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-            gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+            gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + dur);
             osc.connect(gain);
             gain.connect(audioCtx.destination);
             osc.start();
-            osc.stop(audioCtx.currentTime + duration);
+            osc.stop(audioCtx.currentTime + dur);
         } catch(e) {}
     }
 
-    // --- INTERFACE LOGIC ---
+    // --- INTERFACE DYNAMICS ---
     const mainContainer = document.getElementById('mainContainer');
     const inputs = document.querySelectorAll('.auth-input');
 
-    // Dynamic Glass Toggle
+    // Handle typing transparency
     inputs.forEach(input => {
         input.addEventListener('focus', () => {
             mainContainer.classList.add('is-typing');
-            playSound(440, 'sine', 0.1);
+            playBeep(500, 0.1);
         });
         input.addEventListener('blur', () => {
-            const anyActive = Array.from(inputs).some(i => i.value.length > 0);
-            if (!anyActive) mainContainer.classList.remove('is-typing');
+            const hasData = Array.from(inputs).some(i => i.value.length > 0);
+            if (!hasData) mainContainer.classList.remove('is-typing');
         });
     });
 
-    // SMOOTH SLIDE FUNCTION
+    // HORIZONTAL SLIDE TRIGGER
     function toggleView(isSignup) {
         if(isSignup) {
             mainContainer.classList.add('show-signup');
         } else {
             mainContainer.classList.remove('show-signup');
         }
-        playSound(220, 'square', 0.2);
+        playBeep(300, 0.2); // Low beep for transition
     }
 
-    // --- SECURITY & AUTH ---
-    let attempts = 0;
-    let locked = false;
+    // --- AUTH & SECURITY ---
+    let loginFailures = 0;
+    let isLockedOut = false;
 
     function handleLogin() {
-        if(locked) return;
+        if(isLockedOut) return;
         const u = document.getElementById('lUser').value;
         const p = document.getElementById('lPass').value;
 
-        if(!u || !p) return showPopup("ERROR", "Fill all fields.");
-
         auth.signInWithEmailAndPassword(u, p)
             .then(() => {
-                playSound(880, 'sine', 0.5);
-                showPopup("AUTHORIZED", "Identity verified.");
+                playBeep(800, 0.4);
+                showPopup("AUTHORIZED", "Welcome, Warrior.");
             })
             .catch(() => {
-                attempts++;
-                playSound(110, 'sawtooth', 0.3);
-                showPopup("DENIED", "Wrong credentials entered.");
-                if(attempts >= 3) triggerLockout();
+                loginFailures++;
+                playBeep(150, 0.3);
+                showPopup("ACCESS DENIED", "Wrong credentials entered.");
+                if(loginFailures >= 3) applyLockout();
             });
     }
 
@@ -276,31 +275,31 @@
         const p = document.getElementById('sPass').value;
         const c = document.getElementById('sConfirm').value;
 
-        if(p !== c) return showPopup("ERROR", "Passcodes do not match.");
+        if(p !== c) return showPopup("ERROR", "Passcodes mismatch.");
 
         auth.createUserWithEmailAndPassword(u, p)
             .then(res => {
-                db.ref('users/' + res.user.uid).set({ username: u, joined: Date.now() });
-                showPopup("SUCCESS", "New BIB Warrior Identity Created.");
+                db.ref('users/' + res.user.uid).set({ username: u, rank: 'Novice' });
+                showPopup("INITIALIZED", "Warrior Identity Created.");
                 toggleView(false);
             })
-            .catch(err => showPopup("FAILED", err.message));
+            .catch(err => showPopup("FAILURE", err.message));
     }
 
-    function triggerLockout() {
-        locked = true;
-        let t = 30;
+    function applyLockout() {
+        isLockedOut = true;
+        let countdown = 30;
         const btn = document.getElementById('lBtn');
         const timer = document.getElementById('lockTimer');
         btn.disabled = true;
 
-        const countdown = setInterval(() => {
-            t--;
-            timer.innerText = `SECURITY LOCK: ${t}s`;
-            if(t <= 0) {
-                clearInterval(countdown);
-                locked = false;
-                attempts = 0;
+        const clock = setInterval(() => {
+            countdown--;
+            timer.innerText = `SECURITY LOCK: ${countdown}s`;
+            if(countdown <= 0) {
+                clearInterval(clock);
+                isLockedOut = false;
+                loginFailures = 0;
                 btn.disabled = false;
                 timer.innerText = "";
             }
