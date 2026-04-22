@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>BIB1 ARENA | Elite Warrior</title>
+    <title>BIB1 ARENA | Warrior Entry</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
@@ -30,7 +30,7 @@
             overflow: hidden;
         }
 
-        /* ========== PARTICLE & IMAGE BACKGROUND ========== */
+        /* ========== BACKGROUND LAYERS ========== */
         #particles-js {
             position: fixed;
             top: 0; left: 0;
@@ -44,20 +44,8 @@
             width: 100%; height: 100%;
             background: url('image_0.png') no-repeat center center;
             background-size: cover;
-            opacity: 0.15;
+            opacity: 0.2;
             z-index: 1;
-        }
-
-        /* ========== HUD ELEMENTS (ANALYTICS) ========== */
-        .hud-overlay {
-            position: fixed;
-            top: 20px; left: 20px;
-            z-index: 100;
-            font-family: 'Orbitron';
-            color: var(--orange);
-            font-size: 0.7rem;
-            letter-spacing: 2px;
-            pointer-events: none;
         }
 
         /* ========== ELITE GLASS CONTAINER ========== */
@@ -70,23 +58,37 @@
             border-radius: 40px;
             padding: 60px 0;
             backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
             transition: all 0.6s cubic-bezier(0.19, 1, 0.22, 1);
+            overflow: hidden;
         }
 
+        /* Translucent state when typing */
         .main-container.is-typing {
             background: var(--glass-active);
             backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
             border-color: var(--orange);
             box-shadow: 0 0 50px rgba(255, 120, 0, 0.2);
         }
 
+        /* ========== HORIZONTAL SLIDE LOGIC ========== */
         .form-stage {
             display: flex;
-            width: 200%;
+            width: 200%; /* Side-by-side panels */
             transition: transform 0.8s cubic-bezier(0.19, 1, 0.22, 1);
         }
 
-        .panel { width: 50%; padding: 0 45px; text-align: center; }
+        .panel { 
+            width: 50%; 
+            padding: 0 45px; 
+            text-align: center; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+        }
+
+        /* The Slide Effect */
         .show-signup .form-stage { transform: translateX(-50%); }
 
         h2 { 
@@ -111,11 +113,14 @@
             border: none; border-radius: 15px; color: white;
             font-family: 'Orbitron'; font-weight: 900;
             box-shadow: 0 10px 30px rgba(255, 120, 0, 0.3);
+            cursor: pointer;
         }
 
         .btn-glow:active { transform: scale(0.95); }
+        .btn-glow:disabled { opacity: 0.3; filter: grayscale(1); cursor: not-allowed; }
 
         .bottom-links { margin-top: 30px; font-size: 0.8rem; color: #aaa; }
+        .bottom-links p { margin: 10px 0; }
         .bottom-links b { color: var(--orange); cursor: pointer; text-decoration: underline; }
 
         /* Notification Popup */
@@ -126,7 +131,10 @@
             padding: 15px 30px; border-radius: 50px;
             color: #fff; z-index: 1000; font-family: 'Orbitron';
             box-shadow: 0 0 20px var(--orange);
+            animation: slideDown 0.4s ease forwards;
         }
+
+        @keyframes slideDown { from { top: -100px; } to { top: 30px; } }
     </style>
 </head>
 <body>
@@ -134,40 +142,39 @@
     <div class="page-bg"></div>
     <div id="particles-js"></div>
 
-    <div class="hud-overlay">
-        SYSTEM STATUS: ONLINE<br>
-        NEURAL LINK: STABLE<br>
-        WARRIOR CLASS: UNASSIGNED
-    </div>
-
     <div class="main-container" id="mainContainer">
-        <div class="form-stage">
+        <div class="form-stage" id="formStage">
+            
             <div class="panel">
                 <h2>LOGIN</h2>
-                <input type="text" class="auth-input" id="lUser" placeholder="OPERATIVE ID">
+                <input type="text" class="auth-input" id="lUser" placeholder="WARRIOR ID">
                 <input type="password" class="auth-input" id="lPass" placeholder="PASSCODE">
                 <button class="btn-glow" id="lBtn" onclick="handleLogin()">AUTHENTICATE</button>
                 <div id="lockTimer" style="color:var(--orange); font-weight:bold; margin-top:15px; font-family:'Orbitron';"></div>
+                
                 <div class="bottom-links">
-                    <p onclick="toggleView(true)">NEW WARRIOR? <b>INITIALIZE IDENTITY</b></p>
+                    <p>Forgot passcode?</p>
+                    <p onclick="toggleView(true)">New BIB Warrior? <b>Initialize Identity</b></p>
                 </div>
             </div>
 
             <div class="panel">
                 <h2>SIGN UP</h2>
-                <input type="text" class="auth-input" id="sUser" placeholder="NEW OPERATIVE ID">
+                <input type="text" class="auth-input" id="sUser" placeholder="NEW WARRIOR ID">
                 <input type="password" class="auth-input" id="sPass" placeholder="SET PASSCODE">
                 <input type="password" class="auth-input" id="sConfirm" placeholder="CONFIRM PASSCODE">
                 <button class="btn-glow" id="sBtn" onclick="handleSignup()">INITIALIZE</button>
+                
                 <div class="bottom-links">
-                    <p onclick="toggleView(false)">REGISTERED? <b>RE-AUTHENTICATE</b></p>
+                    <p onclick="toggleView(false)">Registered Warrior? <b>Return to Login</b></p>
                 </div>
             </div>
+
         </div>
     </div>
 
 <script>
-    // --- FIREBASE (REPLACE WITH YOUR KEYS) ---
+    // --- FIREBASE CONFIG ---
     const firebaseConfig = {
         apiKey: "YOUR_KEY",
         authDomain: "YOUR_DOMAIN",
@@ -181,56 +188,66 @@
     const auth = firebase.auth();
     const db = firebase.database();
 
-    // --- PARTICLES.JS CONFIGURATION ---
+    // --- PARTICLES.JS ---
     particlesJS("particles-js", {
         "particles": {
-            "number": { "value": 80 },
+            "number": { "value": 90 },
             "color": { "value": "#FF7800" },
             "shape": { "type": "circle" },
-            "opacity": { "value": 0.5 },
+            "opacity": { "value": 0.4 },
             "size": { "value": 2 },
-            "line_linked": { "enable": true, "distance": 150, "color": "#FF7800", "opacity": 0.4, "width": 1 },
-            "move": { "enable": true, "speed": 2 }
+            "line_linked": { "enable": true, "distance": 150, "color": "#FF7800", "opacity": 0.3, "width": 1 },
+            "move": { "enable": true, "speed": 1.5 }
         },
         "interactivity": {
             "events": { "onhover": { "enable": true, "mode": "grab" }, "onclick": { "enable": true, "mode": "push" } }
         }
     });
 
-    // --- SOUNDSCAPE (Web Audio) ---
+    // --- SOUNDSCAPE ---
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     function playSound(freq, type, duration) {
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = type;
-        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start();
-        osc.stop(audioCtx.currentTime + duration);
+        try {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + duration);
+        } catch(e) {}
     }
 
-    // --- UI LOGIC ---
+    // --- INTERFACE LOGIC ---
     const mainContainer = document.getElementById('mainContainer');
     const inputs = document.querySelectorAll('.auth-input');
 
+    // Dynamic Glass Toggle
     inputs.forEach(input => {
         input.addEventListener('focus', () => {
             mainContainer.classList.add('is-typing');
             playSound(440, 'sine', 0.1);
         });
         input.addEventListener('blur', () => {
-            if (!Array.from(inputs).some(i => i.value.length > 0)) mainContainer.classList.remove('is-typing');
+            const anyActive = Array.from(inputs).some(i => i.value.length > 0);
+            if (!anyActive) mainContainer.classList.remove('is-typing');
         });
     });
 
+    // SMOOTH SLIDE FUNCTION
     function toggleView(isSignup) {
-        mainContainer.classList.toggle('show-signup', isSignup);
+        if(isSignup) {
+            mainContainer.classList.add('show-signup');
+        } else {
+            mainContainer.classList.remove('show-signup');
+        }
         playSound(220, 'square', 0.2);
     }
 
+    // --- SECURITY & AUTH ---
     let attempts = 0;
     let locked = false;
 
@@ -239,15 +256,17 @@
         const u = document.getElementById('lUser').value;
         const p = document.getElementById('lPass').value;
 
+        if(!u || !p) return showPopup("ERROR", "Fill all fields.");
+
         auth.signInWithEmailAndPassword(u, p)
             .then(() => {
                 playSound(880, 'sine', 0.5);
-                showPopup("AUTHORIZED", "Access granted.");
+                showPopup("AUTHORIZED", "Identity verified.");
             })
             .catch(() => {
                 attempts++;
                 playSound(110, 'sawtooth', 0.3);
-                showPopup("DENIED", "Invalid Credentials.");
+                showPopup("DENIED", "Wrong credentials entered.");
                 if(attempts >= 3) triggerLockout();
             });
     }
@@ -256,12 +275,13 @@
         const u = document.getElementById('sUser').value;
         const p = document.getElementById('sPass').value;
         const c = document.getElementById('sConfirm').value;
-        if(p !== c) return showPopup("ERROR", "Passcode mismatch.");
+
+        if(p !== c) return showPopup("ERROR", "Passcodes do not match.");
 
         auth.createUserWithEmailAndPassword(u, p)
             .then(res => {
-                db.ref('users/' + res.user.uid).set({ username: u, score: 0 });
-                showPopup("INITIALIZED", "Identity Saved.");
+                db.ref('users/' + res.user.uid).set({ username: u, joined: Date.now() });
+                showPopup("SUCCESS", "New BIB Warrior Identity Created.");
                 toggleView(false);
             })
             .catch(err => showPopup("FAILED", err.message));
@@ -273,12 +293,16 @@
         const btn = document.getElementById('lBtn');
         const timer = document.getElementById('lockTimer');
         btn.disabled = true;
-        const cd = setInterval(() => {
+
+        const countdown = setInterval(() => {
             t--;
-            timer.innerText = `LOCKOUT: ${t}s`;
+            timer.innerText = `SECURITY LOCK: ${t}s`;
             if(t <= 0) {
-                clearInterval(cd);
-                locked = false; attempts = 0; btn.disabled = false; timer.innerText = "";
+                clearInterval(countdown);
+                locked = false;
+                attempts = 0;
+                btn.disabled = false;
+                timer.innerText = "";
             }
         }, 1000);
     }
@@ -286,11 +310,10 @@
     function showPopup(title, msg) {
         const p = document.createElement('div');
         p.className = 'popup';
-        p.innerHTML = `${title}: ${msg}`;
+        p.innerHTML = `<span style="color:var(--orange)">${title}:</span> ${msg}`;
         document.body.appendChild(p);
         setTimeout(() => p.remove(), 3000);
     }
 </script>
 </body>
 </html>
-
