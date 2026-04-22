@@ -1,251 +1,272 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>BIB1 ARENA | Identity Gateway</title>
-    
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-    
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-    
-    <style>
-        :root {
-            --primary: #6C5CE7;
-            --primary-light: #A78BFA;
-            --bg-dark: #07070a;
-            --card-bg: rgba(15, 15, 26, 0.98);
-            --border: rgba(108, 92, 231, 0.4);
-            --orange: #FF7800;
-        } 
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>BIB1 ARENA | Neural Link</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #6C5CE7;
+            --bg-dark: #050508;
+            --orange: #FF7800;
+            --glass: rgba(255, 255, 255, 0.05);
+        }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; } 
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        body {
-            font-family: 'Poppins', sans-serif;
-            background: #000;
-            color: #fff;
-            min-height: 100vh;
-            overflow: hidden;
-        } 
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-dark);
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
 
-        /* ========== AUTH MODAL & TRANSITIONS ========== */
-        #authModal {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle at center, #1a1a2e 0%, #000 100%);
-            z-index: 20000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        } 
+        /* ========== WATERMARK LOGO ========== */
+        .watermark-bg {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%; /* Adjust size */
+            max-width: 500px;
+            opacity: 0.1; /* Very subtle */
+            z-index: -1;
+            pointer-events: none;
+            filter: grayscale(100%);
+        }
 
-        .auth-container {
-            width: 90%;
-            max-width: 400px;
-            text-align: center;
-            perspective: 1000px;
-        } 
+        /* ========== AUTH INTERFACE ========== */
+        #authModal {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle at center, rgba(26, 26, 46, 0.8) 0%, #000 100%);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 10000;
+        }
 
-        .main-logo {
-            width: 180px;
-            margin-bottom: 20px;
-            filter: drop-shadow(0 0 15px rgba(255, 120, 0, 0.4));
-            animation: float 4s ease-in-out infinite;
-        } 
+        .auth-card {
+            width: 90%; max-width: 400px;
+            background: rgba(15, 15, 26, 0.8);
+            backdrop-filter: blur(20px);
+            border-radius: 30px;
+            border: 1px solid rgba(108, 92, 231, 0.3);
+            padding: 40px 30px;
+            text-align: center;
+            overflow: hidden;
+        }
 
-        @keyframes float {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-10px); }
-        } 
+        .form-slider { display: flex; width: 200%; transition: 0.6s cubic-bezier(0.4, 0, 0.2, 1); }
+        .form-panel { width: 50%; }
+        .show-signup .form-slider { transform: translateX(-50%); }
 
-        .auth-card-wrapper {
-            background: var(--card-bg);
-            border-radius: 30px;
-            border: 1px solid var(--border);
-            position: relative;
-            overflow: hidden; /* Hide the sliding form */
-            box-shadow: 0 0 40px rgba(0,0,0,0.8);
-            min-height: 400px;
-        } 
+        h2 { font-family: 'Orbitron'; letter-spacing: 3px; color: var(--orange); margin-bottom: 20px; }
 
-        .form-slider {
-            display: flex;
-            width: 200%; /* Two forms side-by-side */
-            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-        } 
+        input {
+            width: 100%; padding: 15px; margin: 10px 0;
+            background: var(--glass); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 12px; color: white; outline: none;
+        }
 
-        .form-panel {
-            width: 50%;
-            padding: 40px 30px;
-        } 
+        .btn-glow {
+            width: 100%; padding: 15px; margin-top: 20px;
+            background: linear-gradient(135deg, var(--orange), #ff4d00);
+            border: none; border-radius: 12px; color: white;
+            font-family: 'Orbitron'; font-weight: bold; cursor: pointer;
+            box-shadow: 0 5px 15px rgba(255, 120, 0, 0.3);
+        }
 
-        /* State Switch */
-        .show-signup .form-slider { transform: translateX(-50%); } 
+        /* ========== QUIZ UI ========== */
+        #appWrapper { display: none; padding: 20px; }
+        .card { background: var(--glass); border-radius: 20px; padding: 20px; border: 1px solid rgba(108, 92, 231, 0.2); margin-bottom: 20px; }
+        
+        .cat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 20px; }
+        .quiz-option {
+            background: var(--glass); padding: 15px; border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: 0.3s;
+        }
+        .quiz-option:hover { background: rgba(108, 92, 231, 0.3); border-color: var(--primary); }
 
-        h2 { font-family: 'Orbitron'; letter-spacing: 2px; margin-bottom: 10px; color: #fff; }
-        .subtitle { color: var(--primary-light); font-size: 0.8rem; margin-bottom: 25px; display: block; } 
+        .hidden { display: none; }
 
-        input {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid var(--border);
-            padding: 15px 20px;
-            border-radius: 15px;
-            color: white;
-            width: 100%;
-            margin: 8px 0;
-            outline: none;
-            font-family: inherit;
-        } 
-
-        input:focus { border-color: var(--orange); background: rgba(255,255,255,0.1); } 
-
-        .btn-glow {
-            background: linear-gradient(135deg, var(--orange), #ff4d00);
-            color: white; border: none; padding: 15px;
-            border-radius: 15px; font-weight: 700; cursor: pointer;
-            width: 100%; margin-top: 20px; font-family: 'Orbitron';
-            box-shadow: 0 4px 15px rgba(255, 120, 0, 0.3);
-        } 
-
-        .switch-link {
-            margin-top: 20px;
-            display: block;
-            color: var(--primary-light);
-            text-decoration: none;
-            font-size: 0.85rem;
-            cursor: pointer;
-        } 
-
-        .switch-link b { color: var(--orange); } 
-
-        /* ========== POPUPS ========== */
-        .custom-popup {
-            position: fixed; bottom: 30px; right: 30px;
-            background: #111; border-left: 4px solid var(--orange);
-            padding: 20px; border-radius: 10px; z-index: 30000;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.7);
-            animation: slideIn 0.5s ease forwards;
-        } 
-
-        @keyframes slideIn { from { transform: translateX(150%); } to { transform: translateX(0); } }
-    </style>
+        /* Notification */
+        .popup {
+            position: fixed; bottom: 20px; right: 20px; padding: 15px 25px;
+            background: #111; border-left: 4px solid var(--orange);
+            border-radius: 8px; animation: slideIn 0.4s ease; z-index: 20000;
+        }
+        @keyframes slideIn { from { transform: translateX(120%); } to { transform: translateX(0); } }
+    </style>
 </head>
-<body> 
+<body>
+
+<img src="image_0.png" class="watermark-bg" alt="Watermark">
 
 <div id="authModal">
-    <div class="auth-container" id="authContainer">
-        <img src="image_0.png" alt="BIB1 ARENA" class="main-logo">
-        
-        <div class="auth-card-wrapper">
-            <div class="form-slider">
-                <div class="form-panel">
-                    <h2>LOGIN</h2>
-                    <span class="subtitle">ENTER YOUR OPERATIVE CREDENTIALS</span>
-                    <input type="text" id="loginUser" placeholder="Username (Email)">
-                    <input type="password" id="loginPass" placeholder="Passcode">
-                    <button class="btn-glow" id="loginBtn">AUTHENTICATE</button>
-                    <a class="switch-link" id="toSignup">New Operative? <b>Sign Up</b></a>
-                </div> 
+    <div class="auth-card" id="authContainer">
+        <div class="form-slider">
+            <div class="form-panel">
+                <h2>LOGIN</h2>
+                <input type="text" id="loginUser" placeholder="Username (Email)">
+                <input type="password" id="loginPass" placeholder="Passcode">
+                <button class="btn-glow" onclick="handleLogin()">AUTHENTICATE</button>
+                <p style="margin-top:20px; font-size:0.8rem; cursor:pointer" onclick="toggleAuth(true)">New Operative? <b>Sign Up</b></p>
+            </div>
+            <div class="form-panel">
+                <h2>SIGN UP</h2>
+                <input type="text" id="signupUser" placeholder="Choose Username">
+                <input type="password" id="signupPass" placeholder="Set Passcode">
+                <input type="password" id="confirmPass" placeholder="Confirm Passcode">
+                <button class="btn-glow" onclick="handleSignup()">INITIALIZE</button>
+                <p style="margin-top:20px; font-size:0.8rem; cursor:pointer" onclick="toggleAuth(false)">Already registered? <b>Login</b></p>
+            </div>
+        </div>
+        <p id="errorMsg" style="color: #ff4757; margin-top: 15px; font-size: 0.8rem;"></p>
+    </div>
+</div>
 
-                <div class="form-panel">
-                    <h2>SIGN UP</h2>
-                    <span class="subtitle">CREATE NEW IDENTITY</span>
-                    <input type="text" id="signupUser" placeholder="Choose Username (Email)">
-                    <input type="password" id="signupPass" placeholder="Set Passcode">
-                    <input type="password" id="confirmPass" placeholder="Confirm Passcode">
-                    <button class="btn-glow" id="signupBtn">INITIALIZE</button>
-                    <a class="switch-link" id="toLogin">Already registered? <b>Login</b></a>
-                </div>
-            </div>
-        </div>
-        <p id="errorMsg" style="color: #ff4757; margin-top: 15px; font-size: 0.85rem;"></p>
-    </div>
-</div> 
+<div id="appWrapper">
+    <header style="text-align: center; margin-bottom: 30px;">
+        <h1 style="font-family: 'Orbitron'; font-size: 1.5rem;">BIB1 ARENA</h1>
+        <p id="userWelcome" style="color: var(--orange);"></p>
+    </header>
+
+    <div id="categoryView">
+        <div class="card">
+            <h3>Select Your Training Sector</h3>
+            <div class="cat-grid">
+                <div class="quiz-option" onclick="startQuiz('General Knowledge')">General</div>
+                <div class="quiz-option" onclick="startQuiz('Math')">Mathematics</div>
+                <div class="quiz-option" onclick="startQuiz('Human Body')">Biological</div>
+                <div class="quiz-option" onclick="startQuiz('Science')">Physical Sci</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="quizView" class="hidden">
+        <div class="card">
+            <h4 id="qStep" style="color: var(--orange);">Question 1</h4>
+            <p id="qText" style="margin: 20px 0; font-size: 1.1rem;"></p>
+            <div id="optionsContainer"></div>
+        </div>
+    </div>
+</div>
 
 <script>
-    // 1. Firebase Setup (REPLACE WITH YOUR KEYS)
-    const firebaseConfig = {
-        apiKey: "YOUR_API_KEY",
-        authDomain: "YOUR_PROJECT.firebaseapp.com",
-        databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
-        projectId: "YOUR_PROJECT_ID",
-        storageBucket: "YOUR_PROJECT.appspot.com",
-        messagingSenderId: "YOUR_ID",
-        appId: "YOUR_APP_ID"
-    }; 
+    // --- FIREBASE CONFIG ---
+    const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_PROJECT.firebaseapp.com",
+        databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_PROJECT.appspot.com",
+        messagingSenderId: "YOUR_ID",
+        appId: "YOUR_APP_ID"
+    };
 
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.database(); 
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database();
 
-    const authContainer = document.getElementById('authContainer');
-    const errorEl = document.getElementById('errorMsg'); 
+    let allQuestions = {};
+    let currentPool = [];
+    let qIndex = 0;
 
-    // 2. Transition Logic
-    document.getElementById('toSignup').addEventListener('click', () => {
-        authContainer.classList.add('show-signup');
-        errorEl.innerText = "";
-    }); 
+    // --- AUTH LOGIC ---
+    function toggleAuth(showSignup) {
+        document.getElementById('authContainer').classList.toggle('show-signup', showSignup);
+        document.getElementById('errorMsg').innerText = "";
+    }
 
-    document.getElementById('toLogin').addEventListener('click', () => {
-        authContainer.classList.remove('show-signup');
-        errorEl.innerText = "";
-    }); 
+    function handleSignup() {
+        const email = document.getElementById('signupUser').value;
+        const pass = document.getElementById('signupPass').value;
+        const confirm = document.getElementById('confirmPass').value;
 
-    // 3. Signup Function
-    document.getElementById('signupBtn').addEventListener('click', () => {
-        const user = document.getElementById('signupUser').value;
-        const pass = document.getElementById('signupPass').value;
-        const confirm = document.getElementById('confirmPass').value; 
+        if(pass !== confirm) { alert("Passcodes mismatch!"); return; }
 
-        if (pass !== confirm) {
-            errorEl.innerText = "Passcodes do not match!";
-            return;
-        } 
+        auth.createUserWithEmailAndPassword(email, pass)
+            .then(res => {
+                db.ref('users/' + res.user.uid).set({ username: email.split('@')[0], score: 0 });
+                notify("Success", "Identity Created");
+            }).catch(err => document.getElementById('errorMsg').innerText = err.message);
+    }
 
-        auth.createUserWithEmailAndPassword(user, pass)
-            .then((userCredential) => {
-                // Save to Firebase Database Automatically
-                db.ref('users/' + userCredential.user.uid).set({
-                    username: user.split('@')[0],
-                    highScore: 0,
-                    gamesPlayed: 0,
-                    joined: Date.now()
-                });
-                showPopup("Identity Saved", "Welcome to the Arena.");
-            })
-            .catch(err => errorEl.innerText = err.message);
-    }); 
+    function handleLogin() {
+        const email = document.getElementById('loginUser').value;
+        const pass = document.getElementById('loginPass').value;
+        auth.signInWithEmailAndPassword(email, pass)
+            .catch(err => document.getElementById('errorMsg').innerText = err.message);
+    }
 
-    // 4. Login Function
-    document.getElementById('loginBtn').addEventListener('click', () => {
-        const user = document.getElementById('loginUser').value;
-        const pass = document.getElementById('loginPass').value; 
+    auth.onAuthStateChanged(user => {
+        if(user) {
+            document.getElementById('authModal').style.display = 'none';
+            document.getElementById('appWrapper').style.display = 'block';
+            document.getElementById('userWelcome').innerText = "Operative: " + user.email.split('@')[0];
+            fetchData();
+        }
+    });
 
-        auth.signInWithEmailAndPassword(user, pass)
-            .then(() => showPopup("Access Granted", "Neural link established."))
-            .catch(err => errorEl.innerText = err.message);
-    }); 
+    // --- QUIZ LOGIC ---
+    function fetchData() {
+        db.ref('questions').on('value', snap => { allQuestions = snap.val(); });
+    }
 
-    function showPopup(title, msg) {
-        const p = document.createElement('div');
-        p.className = 'custom-popup';
-        p.innerHTML = `<strong>${title}</strong><br><small>${msg}</small>`;
-        document.body.appendChild(p);
-        setTimeout(() => p.remove(), 4000);
-    } 
+    function startQuiz(cat) {
+        if(!allQuestions[cat]) return notify("Error", "No questions in this sector");
+        currentPool = Object.values(allQuestions[cat]);
+        qIndex = 0;
+        document.getElementById('categoryView').classList.add('hidden');
+        document.getElementById('quizView').classList.remove('hidden');
+        showQuestion();
+    }
 
-    // Hide auth if logged in
-    auth.onAuthStateChanged(user => {
-        if (user) {
-            document.getElementById('authModal').style.display = 'none';
-            // Here you would trigger your main app wrapper to show
-        }
-    });
+    function showQuestion() {
+        const q = currentPool[qIndex];
+        if(!q) {
+            notify("Arena Cleared", "Sector complete!");
+            location.reload();
+            return;
+        }
+        document.getElementById('qStep').innerText = `Question ${qIndex + 1}`;
+        document.getElementById('qText').innerText = q.text;
+        
+        const container = document.getElementById('optionsContainer');
+        container.innerHTML = "";
+        ['A','B','C','D'].forEach(opt => {
+            const div = document.createElement('div');
+            div.className = "quiz-option";
+            div.innerText = `${opt}: ${q['option'+opt]}`;
+            div.onclick = () => checkAnswer(opt, q.correctAnswer);
+            container.appendChild(div);
+        });
+    }
+
+    function checkAnswer(choice, correct) {
+        if(choice === correct) {
+            notify("Correct", "+10 Neural Points");
+        } else {
+            notify("Failed", "Correct link was: " + correct);
+        }
+        qIndex++;
+        setTimeout(showQuestion, 1000);
+    }
+
+    function notify(title, msg) {
+        const p = document.createElement('div');
+        p.className = 'popup';
+        p.innerHTML = `<strong>${title}</strong><br><small>${msg}</small>`;
+        document.body.appendChild(p);
+        setTimeout(() => p.remove(), 3000);
+    }
 </script>
 </body>
 </html>
