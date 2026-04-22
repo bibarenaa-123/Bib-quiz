@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>BIB1 ARENA | Entry</title>
+    <title>BIB1 ARENA | Warrior Gateway</title>
     
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
@@ -15,8 +15,8 @@
         :root {
             --orange: #FF7800;
             --glass-clear: rgba(255, 255, 255, 0.02);
-            --glass-focus: rgba(10, 10, 20, 0.7);
-            --border: rgba(255, 255, 255, 0.1);
+            --glass-translucent: rgba(10, 10, 20, 0.85);
+            --border: rgba(255, 255, 255, 0.15);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -32,18 +32,17 @@
             overflow: hidden;
         }
 
-        /* ========== THE BACKGROUND LOGO ========== */
-        /* This makes image_0.png the actual background of the whole site */
+        /* ========== FULL-PAGE BACKGROUND IMAGE ========== */
         .page-background {
             position: fixed;
             top: 0; left: 0;
             width: 100vw; height: 100vh;
             background: url('image_0.png') no-repeat center center;
-            background-size: 60%; /* Adjusted for better visibility */
+            background-size: cover; /* Covers the whole page like your reference */
             z-index: 1;
         }
 
-        /* ========== HIGH-TRANSPARENCY GLASS CARD ========== */
+        /* ========== DYNAMIC GLASS CONTAINER ========== */
         .main-container {
             position: relative;
             z-index: 10;
@@ -53,90 +52,103 @@
             border: 1px solid var(--border);
             border-radius: 40px;
             padding: 60px 0;
-            box-shadow: 0 40px 100px rgba(0,0,0,0.8);
+            box-shadow: 0 50px 100px rgba(0,0,0,0.9);
             overflow: hidden;
             
-            /* Initial state: Very clear */
+            /* Initial clear state */
             backdrop-filter: blur(2px);
             -webkit-backdrop-filter: blur(2px);
-            transition: all 0.5s ease;
+            transition: all 0.6s cubic-bezier(0.19, 1, 0.22, 1);
         }
 
-        /* The "Translucent" state triggered when typing */
+        /* State when user is inputting credentials */
         .main-container.is-typing {
-            background: var(--glass-focus);
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
-            border-color: rgba(255, 120, 0, 0.3);
+            background: var(--glass-translucent);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border-color: var(--orange);
         }
 
+        /* ========== HORIZONTAL SLIDE STAGE ========== */
         .form-stage {
             display: flex;
-            width: 200%;
-            transition: transform 0.7s cubic-bezier(0.19, 1, 0.22, 1);
+            width: 200%; /* Login and Signup side-by-side */
+            transition: transform 0.8s cubic-bezier(0.19, 1, 0.22, 1);
         }
 
-        .panel { width: 50%; padding: 0 45px; }
+        .panel { 
+            width: 50%; 
+            padding: 0 45px; 
+            display: flex; 
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Slide to Signup */
         .show-signup .form-stage { transform: translateX(-50%); }
 
         h2 { 
             font-family: 'Orbitron'; 
             letter-spacing: 5px; 
-            margin-bottom: 30px; 
-            text-align: center; 
+            margin-bottom: 35px; 
             color: #fff;
-            text-shadow: 0 0 10px rgba(0,0,0,0.5);
+            text-shadow: 0 0 15px rgba(0,0,0,0.8);
         }
 
         input {
             width: 100%;
-            padding: 18px;
-            margin: 10px 0;
-            background: rgba(255,255,255,0.07);
+            padding: 18px 25px;
+            margin: 12px 0;
+            background: rgba(255,255,255,0.05);
             border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 15px;
+            border-radius: 18px;
             color: #fff;
             outline: none;
+            font-size: 1rem;
             transition: 0.3s;
         }
 
-        input:focus { border-color: var(--orange); background: rgba(255,255,255,0.15); }
+        input:focus { border-color: var(--orange); background: rgba(255,255,255,0.12); }
 
         .btn-glow {
             width: 100%;
-            padding: 16px;
+            padding: 18px;
             margin-top: 25px;
             background: linear-gradient(135deg, var(--orange), #ff4d00);
             border: none;
-            border-radius: 15px;
+            border-radius: 18px;
             color: white;
             font-family: 'Orbitron';
             font-weight: 900;
             cursor: pointer;
-            box-shadow: 0 8px 20px rgba(255, 120, 0, 0.3);
+            box-shadow: 0 10px 30px rgba(255, 120, 0, 0.4);
+            transition: 0.3s;
         }
 
-        .btn-glow:disabled { opacity: 0.4; filter: grayscale(1); }
+        .btn-glow:disabled { opacity: 0.3; cursor: not-allowed; filter: grayscale(1); }
 
-        .switch-link {
+        /* Reference Image Links Styling */
+        .bottom-links {
             text-align: center;
             margin-top: 30px;
             font-size: 0.85rem;
-            color: #fff;
-            cursor: pointer;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
         }
 
-        .switch-link b { color: var(--orange); }
+        .bottom-links p { color: #fff; margin: 8px 0; cursor: pointer; }
+        .bottom-links b { color: var(--orange); text-decoration: underline; }
 
-        /* Popup Styles */
+        /* Notification Popup */
         .popup {
             position: fixed; top: 30px; left: 50%;
             transform: translateX(-50%);
-            background: #111; border: 1px solid var(--orange);
-            padding: 15px 30px; border-radius: 50px;
-            color: #fff; z-index: 1000; font-weight: bold;
+            background: rgba(0,0,0,0.9); border: 1px solid var(--orange);
+            padding: 15px 35px; border-radius: 50px;
+            color: #fff; z-index: 9999; font-weight: bold;
+            box-shadow: 0 0 20px rgba(255,120,0,0.5);
+            animation: slideDown 0.4s ease forwards;
         }
+
+        @keyframes slideDown { from { top: -100px; } to { top: 30px; } }
     </style>
 </head>
 <body>
@@ -151,8 +163,13 @@
                 <input type="text" class="auth-input" id="lUser" placeholder="Username">
                 <input type="password" class="auth-input" id="lPass" placeholder="Passcode">
                 <button class="btn-glow" id="lBtn" onclick="handleLogin()">AUTHENTICATE</button>
-                <div id="lockTimer" style="text-align:center; color:var(--orange); margin-top:10px;"></div>
-                <p class="switch-link" onclick="toggleView(true)">New BIB Warrior? <b>Sign Up</b></p>
+                
+                <div id="lockTimer" style="color:var(--orange); font-weight:bold; margin-top:10px;"></div>
+
+                <div class="bottom-links">
+                    <p>Forgot your password?</p>
+                    <p onclick="toggleView(true)">New BIB Warrior? <b>Create new account</b></p>
+                </div>
             </div>
 
             <div class="panel">
@@ -160,22 +177,25 @@
                 <input type="text" class="auth-input" id="sUser" placeholder="Set Username">
                 <input type="password" class="auth-input" id="sPass" placeholder="Set Passcode">
                 <input type="password" class="auth-input" id="sConfirm" placeholder="Confirm Passcode">
-                <button class="btn-glow" onclick="handleSignup()">CREATE IDENTITY</button>
-                <p class="switch-link" onclick="toggleView(false)">Already a Warrior? <b>Login</b></p>
+                <button class="btn-glow" id="sBtn" onclick="handleSignup()">INITIALIZE</button>
+                
+                <div class="bottom-links">
+                    <p onclick="toggleView(false)">Existing Warrior? <b>Login here</b></p>
+                </div>
             </div>
 
         </div>
     </div>
 
 <script>
-    // --- FIREBASE SETUP ---
+    // --- FIREBASE CONFIGURATION ---
     const firebaseConfig = {
         apiKey: "YOUR_KEY",
         authDomain: "YOUR_DOMAIN",
         databaseURL: "YOUR_URL",
         projectId: "YOUR_ID",
         storageBucket: "YOUR_BUCKET",
-        messagingSenderId: "YOUR_SENDER_ID",
+        messagingSenderId: "YOUR_SENDER",
         appId: "YOUR_APP_ID"
     };
     firebase.initializeApp(firebaseConfig);
@@ -185,33 +205,33 @@
     const mainContainer = document.getElementById('mainContainer');
     const inputs = document.querySelectorAll('.auth-input');
 
-    // --- DYNAMIC GLASS LOGIC ---
-    // When user clicks into an input, make the glass translucent (blur/darken)
+    // --- DYNAMIC GLASS EFFECT ---
     inputs.forEach(input => {
-        input.addEventListener('focus', () => {
-            mainContainer.classList.add('is-typing');
-        });
-        // When user clicks away, if inputs are empty, return to clear glass
+        // Blur background when typing starts
+        input.addEventListener('focus', () => mainContainer.classList.add('is-typing'));
+        // Return to clear glass if inputs are empty
         input.addEventListener('blur', () => {
-            const anyActive = Array.from(inputs).some(i => i.value.length > 0);
-            if(!anyActive) mainContainer.classList.remove('is-typing');
+            const hasValue = Array.from(inputs).some(i => i.value.length > 0);
+            if (!hasValue) mainContainer.classList.remove('is-typing');
         });
     });
 
-    let attempts = 0;
-    let isLocked = false;
-
+    // --- VIEW TRANSITION ---
     function toggleView(showSignup) {
         mainContainer.classList.toggle('show-signup', showSignup);
     }
 
+    // --- SECURITY & AUTH LOGIC ---
+    let attempts = 0;
+    let locked = false;
+
     function handleLogin() {
-        if(isLocked) return;
+        if(locked) return;
         const u = document.getElementById('lUser').value;
         const p = document.getElementById('lPass').value;
 
         auth.signInWithEmailAndPassword(u, p)
-            .then(() => showPopup("ACCESS GRANTED", "Welcome."))
+            .then(() => showPopup("SUCCESS", "Neural link established."))
             .catch(() => {
                 attempts++;
                 showPopup("DENIED", "Wrong credentials entered.");
@@ -224,33 +244,33 @@
         const p = document.getElementById('sPass').value;
         const c = document.getElementById('sConfirm').value;
 
-        if(p !== c) return showPopup("ERROR", "Passcodes mismatch.");
+        if(p !== c) return showPopup("ERROR", "Passcodes do not match.");
 
         auth.createUserWithEmailAndPassword(u, p)
             .then(res => {
-                db.ref('users/'+res.user.uid).set({username: u, joined: Date.now()});
-                showPopup("CREATED", "Identity Saved.");
+                db.ref('users/' + res.user.uid).set({ username: u, created: Date.now() });
+                showPopup("SUCCESS", "Warrior Identity Created.");
                 toggleView(false);
             })
             .catch(err => showPopup("FAILED", err.message));
     }
 
     function startLockout() {
-        isLocked = true;
-        let t = 30;
+        locked = true;
+        let time = 30;
         const btn = document.getElementById('lBtn');
-        const timer = document.getElementById('lockTimer');
+        const timerText = document.getElementById('lockTimer');
         btn.disabled = true;
 
-        const clock = setInterval(() => {
-            t--;
-            timer.innerText = `LOCKED: ${t}s`;
-            if(t <= 0) {
-                clearInterval(clock);
-                isLocked = false;
+        const countdown = setInterval(() => {
+            time--;
+            timerText.innerText = `LOCKED: ${time}s`;
+            if(time <= 0) {
+                clearInterval(countdown);
+                locked = false;
                 attempts = 0;
                 btn.disabled = false;
-                timer.innerText = "";
+                timerText.innerText = "";
             }
         }, 1000);
     }
@@ -258,7 +278,7 @@
     function showPopup(title, msg) {
         const p = document.createElement('div');
         p.className = 'popup';
-        p.innerHTML = `${title}: ${msg}`;
+        p.innerHTML = `<span style="color:var(--orange)">${title}:</span> ${msg}`;
         document.body.appendChild(p);
         setTimeout(() => p.remove(), 3000);
     }
