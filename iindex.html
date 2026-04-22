@@ -1,240 +1,251 @@
-            
-        .            cinematic.style.display = 'none';
-        }
-        document.getElementById('appWrapper').style.display = 'block';
-        document.getElementById('appWrapper').style.animation = 'appFadeIn 0.8s ease forwards';
-        checkAuthState();
-    }, 3600);
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>BIB1 ARENA | Identity Gateway</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #6C5CE7;
+            --primary-light: #A78BFA;
+            --bg-dark: #07070a;
+            --card-bg: rgba(15, 15, 26, 0.98);
+            --border: rgba(108, 92, 231, 0.4);
+            --orange: #FF7800;
+        } 
 
-    // Auth State
-    function checkAuthState() {
-        auth.onAuthStateChanged((user) => {
-            if (user) {
-                currentUser = user;
-                document.getElementById('userEmailDisplay')?.remove();
-                document.getElementById('profileName').innerText = user.displayName || user.email.split('@')[0];
-                document.getElementById('profileEmail').innerText = user.email;
-                loadUserStats();
-                loadQuestions();
-                showCustomPopup('BIB1 ARENA', `Welcome back, ${user.email.split('@')[0]}! Ready to dominate?`, 'success');
-            } else {
-                showLoginPage();
-            }
-        });
-    }
+        * { margin: 0; padding: 0; box-sizing: border-box; } 
 
-    function showLoginPage() {
-        const email = prompt('🔐 BIB1 ARENA LOGIN\n\nEnter your email:');
-        if (!email) return;
-        const password = prompt('Enter your password:');
-        auth.signInWithEmailAndPassword(email, password)
-            .then(() => {
-                if (password === ADMIN_PASSCODE) {
-                    showCustomPopup('Admin Access', 'You have full question management privileges!', 'success');
-                }
-                showCustomPopup('Welcome!', 'Successfully logged in to BIB1 Arena!', 'success');
-            })
-            .catch(() => {
-                auth.createUserWithEmailAndPassword(email, password)
-                    .then(() => {
-                        showCustomPopup('Account Created', 'Welcome to BIB1 Arena! Start your journey now!', 'success');
-                    })
-                    .catch(err => showCustomPopup('Error', err.message, 'error'));
-            });
-    }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #000;
+            color: #fff;
+            min-height: 100vh;
+            overflow: hidden;
+        } 
 
-    // Load Questions
-    function loadQuestions() {
-        database.ref('questions').on('value', (snapshot) => {
-            const data = snapshot.val();
-            if (data) {
-                const questions = Object.keys(data).map(key => ({ id: key, ...data[key] }));
-                trainingQuestions = [...questions];
-                quizQuestions = [...questions];
-                document.getElementById('totalQuestionsStat').innerText = questions.length;
-            }
-        });
-    }
+        /* ========== AUTH MODAL & TRANSITIONS ========== */
+        #authModal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at center, #1a1a2e 0%, #000 100%);
+            z-index: 20000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        } 
 
-    // Load User Stats
-    function loadUserStats() {
-        if (!currentUser) return;
-        const userRef = database.ref(`users/${currentUser.uid}`);
-        userRef.on('value', (snapshot) => {
-            const data = snapshot.val();
-            if (data) {
-                document.getElementById('totalGamesStat').innerText = data.gamesPlayed || 0;
-                document.getElementById('highScoreStat').innerText = data.highScore || 0;
-                document.getElementById('profileGames').innerText = data.gamesPlayed || 0;
-                document.getElementById('profileBestScore').innerText = data.highScore || 0;
-                const avg = data.totalScore && data.gamesPlayed ? Math.floor(data.totalScore / data.gamesPlayed) : 0;
-                document.getElementById('profileAvgScore').innerText = avg;
-            }
-        });
-    }
+        .auth-container {
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            perspective: 1000px;
+        } 
 
-    function updateUserStats(score, totalQuestions) {
-        if (!currentUser) return;
-        const userRef = database.ref(`users/${currentUser.uid}`);
-        userRef.transaction((userData) => {
-            if (!userData) userData = { gamesPlayed: 0, highScore: 0, totalScore: 0 };
-            userData.gamesPlayed = (userData.gamesPlayed || 0) + 1;
-            userData.totalScore = (userData.totalScore || 0) + score;
-            if (score > (userData.highScore || 0)) userData.highScore = score;
-            return userData;
-        });
-        
-        database.ref('leaderboard').push({
-            playerName: currentUser.email.split('@')[0],
-            score: score,
-            timestamp: Date.now()
-        });
-    }
+        .main-logo {
+            width: 180px;
+            margin-bottom: 20px;
+            filter: drop-shadow(0 0 15px rgba(255, 120, 0, 0.4));
+            animation: float 4s ease-in-out infinite;
+        } 
 
-    // Training Mode
-    function startTraining() {
-        if (!trainingQuestions.length) {
-            showCustomPopup('No Questions', 'No questions available yet. Contact admin!', 'error');
-            return;
-        }
-        currentTrainingIndex = 0;
-        trainingScore = 0;
-        showTrainingQuestion();
-        showCustomPopup('Training Mode', 'Guided learning session started!', 'success');
-    }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        } 
 
-    function showTrainingQuestion() {
-        if (currentTrainingIndex >= trainingQuestions.length) {
-            document.getElementById('trainingFeedback').innerHTML = `
-                <div class="card" style="background: linear-gradient(135deg, #6C5CE720, #8B5CF620);">
-                    <h3 style="color: #A78BFA;">🎉 TRAINING COMPLETE!</h3>
-                    <p>Your score: ${trainingScore}/${trainingQuestions.length * 10}</p>
-                    <button onclick="startTraining()">TRAIN AGAIN</button>
-                </div>`;
-            showCustomPopup('Training Complete', `You scored ${trainingScore} points! Keep practicing!`, 'success');
-            return;
-        }
-        
-        const q = trainingQuestions[currentTrainingIndex];
-        let html = `<div class="card"><h3>Question ${currentTrainingIndex + 1}/${trainingQuestions.length}</h3>
-        <p style="font-size: 1.1rem; margin: 20px 0;">${q.text}</p>`;
-        
-        ['A', 'B', 'C', 'D'].forEach(opt => {
-            html += `<div class="quiz-option" onclick="checkTrainingAnswer('${opt}', '${q.correctAnswer}', '${q.text.replace(/'/g, "\\'")}')">
-                        ${opt}. ${q['option' + opt] || 'N/A'}
-                    </div>`;
-        });
-        html += `</div>`;
-        document.getElementById('trainingFeedback').innerHTML = html;
-    }
+        .auth-card-wrapper {
+            background: var(--card-bg);
+            border-radius: 30px;
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden; /* Hide the sliding form */
+            box-shadow: 0 0 40px rgba(0,0,0,0.8);
+            min-height: 400px;
+        } 
 
-    window.checkTrainingAnswer = (selected, correct, questionText) => {
-        const isCorrect = selected === correct;
-        if (isCorrect) {
-            trainingScore += 10;
-            showCustomPopup('✓ CORRECT!', '+10 points! Great job!', 'success');
-        } else {
-            showCustomPopup('✗ INCORRECT', `Correct answer: ${correct}. Keep learning!`, 'error');
-        }
-        currentTrainingIndex++;
-        showTrainingQuestion();
-    };
+        .form-slider {
+            display: flex;
+            width: 200%; /* Two forms side-by-side */
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        } 
 
-    // Quiz Mode
-    function startQuiz() {
-        if (!quizQuestions.length) {
-            showCustomPopup('No Questions', 'No questions available yet!', 'error');
-            return;
-        }
-        currentQuizIndex = 0;
-        quizScore = 0;
-        showQuizQuestion();
-        showCustomPopup('Competition Mode', 'Quiz started! Show your skills!', 'success');
-    }
+        .form-panel {
+            width: 50%;
+            padding: 40px 30px;
+        } 
 
-    function showQuizQuestion() {
-        if (currentQuizIndex >= quizQuestions.length) {
-            updateUserStats(quizScore, quizQuestions.length);
-            document.getElementById('quizFeedback').innerHTML = `
-                <div class="card">
-                    <h3 style="color: #A78BFA;">🏆 QUIZ COMPLETE!</h3>
-                    <p>Final Score: ${quizScore}/${quizQuestions.length * 10}</p>
-                    <p>Your score has been submitted to the leaderboard!</p>
-                    <button onclick="startQuiz()">PLAY AGAIN</button>
-                </div>`;
-            showCustomPopup('Quiz Complete', `Final Score: ${quizScore} points! Check the leaderboard!`, 'success');
-            loadLeaderboard();
-            return;
-        }
-        
-        const q = quizQuestions[currentQuizIndex];
-        let html = `<div class="card"><h3>Competition Round ${currentQuizIndex + 1}/${quizQuestions.length}</h3>
-        <p style="font-size: 1.1rem; margin: 20px 0;">${q.text}</p>`;
-        
-        ['A', 'B', 'C', 'D'].forEach(opt => {
-            html += `<div class="quiz-option" onclick="checkQuizAnswer('${opt}', '${q.correctAnswer}')">
-                        ${opt}. ${q['option' + opt] || 'N/A'}
-                    </div>`;
-        });
-        html += `</div>`;
-        document.getElementById('quizContainer').innerHTML = html;
-    }
+        /* State Switch */
+        .show-signup .form-slider { transform: translateX(-50%); } 
 
-    window.checkQuizAnswer = (selected, correct) => {
-        if (selected === correct) {
-            quizScore += 10;
-            showCustomPopup('✓ CORRECT!', '+10 points!', 'success');
-        } else {
-            showCustomPopup('✗ INCORRECT', `Correct answer: ${correct}`, 'error');
-        }
-        currentQuizIndex++;
-        showQuizQuestion();
-    };
+        h2 { font-family: 'Orbitron'; letter-spacing: 2px; margin-bottom: 10px; color: #fff; }
+        .subtitle { color: var(--primary-light); font-size: 0.8rem; margin-bottom: 25px; display: block; } 
 
-    function loadLeaderboard() {
-        database.ref('leaderboard').orderByChild('score').limitToLast(10).on('value', (snapshot) => {
-            const data = snapshot.val();
-            if (data) {
-                const entries = Object.values(data).sort((a,b) => b.score - a.score);
-                let html = '<ol style="margin-left: 20px;">';
-                entries.slice(0, 10).forEach(entry => {
-                    html += `<li><strong>${entry.playerName}</strong> - ${entry.score} pts</li>`;
-                });
-                html += '</ol>';
-                document.getElementById('leaderboardList').innerHTML = html;
-            } else {
-                document.getElementById('leaderboardList').innerHTML = 'No scores yet. Be the first!';
-            }
-        });
-    }
+        input {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            padding: 15px 20px;
+            border-radius: 15px;
+            color: white;
+            width: 100%;
+            margin: 8px 0;
+            outline: none;
+            font-family: inherit;
+        } 
 
-    // Menu & Navigation
-    function switchPage(pageId) {
-        document.querySelectorAll('.page').forEach(page => page.classList.remove('active-page'));
-        document.getElementById(`${pageId}Page`).classList.add('active-page');
-        closeMenu();
-        
-        if (pageId === 'quiz') loadLeaderboard();
-        if (pageId === 'profile' && currentUser) loadUserStats();
-    }
+        input:focus { border-color: var(--orange); background: rgba(255,255,255,0.1); } 
 
-    function closeMenu() {
-        document.getElementById('sideMenu').classList.remove('open');
-        document.getElementById('menuOverlay').classList.remove('active');
-    }
+        .btn-glow {
+            background: linear-gradient(135deg, var(--orange), #ff4d00);
+            color: white; border: none; padding: 15px;
+            border-radius: 15px; font-weight: 700; cursor: pointer;
+            width: 100%; margin-top: 20px; font-family: 'Orbitron';
+            box-shadow: 0 4px 15px rgba(255, 120, 0, 0.3);
+        } 
 
-    document.getElementById('menuToggleBtn').addEventListener('click', () => {
-        document.getElementById('sideMenu').classList.toggle('open');
-        document.getElementById('menuOverlay').classList.toggle('active');
-    });
-    document.getElementById('menuOverlay').addEventListener('click', closeMenu);
-    
-    document.querySelectorAll('.menu-item[data-page]').forEach(item => {
-        item.addEventListener('click', () => switchPage(item.dataset.page));
-    });
-    
-    document.getElementById('logoutBtn').addEventListener('click', () => {
-        auth.signOut().then(() => {
-            showCustomPopup('Logged Out', 'See you next time, champion!', 'info');
-            
-  = startTraining
+        .switch-link {
+            margin-top: 20px;
+            display: block;
+            color: var(--primary-light);
+            text-decoration: none;
+            font-size: 0.85rem;
+            cursor: pointer;
+        } 
+
+        .switch-link b { color: var(--orange); } 
+
+        /* ========== POPUPS ========== */
+        .custom-popup {
+            position: fixed; bottom: 30px; right: 30px;
+            background: #111; border-left: 4px solid var(--orange);
+            padding: 20px; border-radius: 10px; z-index: 30000;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.7);
+            animation: slideIn 0.5s ease forwards;
+        } 
+
+        @keyframes slideIn { from { transform: translateX(150%); } to { transform: translateX(0); } }
+    </style>
+</head>
+<body> 
+
+<div id="authModal">
+    <div class="auth-container" id="authContainer">
+        <img src="image_0.png" alt="BIB1 ARENA" class="main-logo">
+        
+        <div class="auth-card-wrapper">
+            <div class="form-slider">
+                <div class="form-panel">
+                    <h2>LOGIN</h2>
+                    <span class="subtitle">ENTER YOUR OPERATIVE CREDENTIALS</span>
+                    <input type="text" id="loginUser" placeholder="Username (Email)">
+                    <input type="password" id="loginPass" placeholder="Passcode">
+                    <button class="btn-glow" id="loginBtn">AUTHENTICATE</button>
+                    <a class="switch-link" id="toSignup">New Operative? <b>Sign Up</b></a>
+                </div> 
+
+                <div class="form-panel">
+                    <h2>SIGN UP</h2>
+                    <span class="subtitle">CREATE NEW IDENTITY</span>
+                    <input type="text" id="signupUser" placeholder="Choose Username (Email)">
+                    <input type="password" id="signupPass" placeholder="Set Passcode">
+                    <input type="password" id="confirmPass" placeholder="Confirm Passcode">
+                    <button class="btn-glow" id="signupBtn">INITIALIZE</button>
+                    <a class="switch-link" id="toLogin">Already registered? <b>Login</b></a>
+                </div>
+            </div>
+        </div>
+        <p id="errorMsg" style="color: #ff4757; margin-top: 15px; font-size: 0.85rem;"></p>
+    </div>
+</div> 
+
+<script>
+    // 1. Firebase Setup (REPLACE WITH YOUR KEYS)
+    const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_PROJECT.firebaseapp.com",
+        databaseURL: "https://YOUR_PROJECT-default-rtdb.firebaseio.com",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_PROJECT.appspot.com",
+        messagingSenderId: "YOUR_ID",
+        appId: "YOUR_APP_ID"
+    }; 
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.database(); 
+
+    const authContainer = document.getElementById('authContainer');
+    const errorEl = document.getElementById('errorMsg'); 
+
+    // 2. Transition Logic
+    document.getElementById('toSignup').addEventListener('click', () => {
+        authContainer.classList.add('show-signup');
+        errorEl.innerText = "";
+    }); 
+
+    document.getElementById('toLogin').addEventListener('click', () => {
+        authContainer.classList.remove('show-signup');
+        errorEl.innerText = "";
+    }); 
+
+    // 3. Signup Function
+    document.getElementById('signupBtn').addEventListener('click', () => {
+        const user = document.getElementById('signupUser').value;
+        const pass = document.getElementById('signupPass').value;
+        const confirm = document.getElementById('confirmPass').value; 
+
+        if (pass !== confirm) {
+            errorEl.innerText = "Passcodes do not match!";
+            return;
+        } 
+
+        auth.createUserWithEmailAndPassword(user, pass)
+            .then((userCredential) => {
+                // Save to Firebase Database Automatically
+                db.ref('users/' + userCredential.user.uid).set({
+                    username: user.split('@')[0],
+                    highScore: 0,
+                    gamesPlayed: 0,
+                    joined: Date.now()
+                });
+                showPopup("Identity Saved", "Welcome to the Arena.");
+            })
+            .catch(err => errorEl.innerText = err.message);
+    }); 
+
+    // 4. Login Function
+    document.getElementById('loginBtn').addEventListener('click', () => {
+        const user = document.getElementById('loginUser').value;
+        const pass = document.getElementById('loginPass').value; 
+
+        auth.signInWithEmailAndPassword(user, pass)
+            .then(() => showPopup("Access Granted", "Neural link established."))
+            .catch(err => errorEl.innerText = err.message);
+    }); 
+
+    function showPopup(title, msg) {
+        const p = document.createElement('div');
+        p.className = 'custom-popup';
+        p.innerHTML = `<strong>${title}</strong><br><small>${msg}</small>`;
+        document.body.appendChild(p);
+        setTimeout(() => p.remove(), 4000);
+    } 
+
+    // Hide auth if logged in
+    auth.onAuthStateChanged(user => {
+        if (user) {
+            document.getElementById('authModal').style.display = 'none';
+            // Here you would trigger your main app wrapper to show
+        }
+    });
+</script>
+</body>
+</html>
